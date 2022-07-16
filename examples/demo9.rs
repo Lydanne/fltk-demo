@@ -28,15 +28,46 @@ enum DrawElem {
 #[derive(Debug, Copy, Clone)]
 struct ElemLine {
     vertex: [Coordinate; 2],
-    drag_vertex: i32,
+    drag_vertex: i32, // 0 from point, 1 end point
 }
 
 #[derive(Debug, Copy, Clone)]
 struct ElemRect {
-    x: i32,
-    y: i32,
-    w: i32,
-    h: i32,
+    vertex: [Coordinate; 2], // diagonal
+    drag_vertex: i32,        // 0 from point, 1 end point
+}
+
+impl ElemRect {
+    pub fn to_angle_point(&self) -> [Coordinate; 4] {
+        let mut tl = coord! {x: self.vertex[0].x as f64, y: self.vertex[0].y as f64};
+        let mut tr = coord! {x: 0., y: 0.};
+        let mut br = coord! {x: self.vertex[1].x as f64, y: self.vertex[1].y as f64};
+        let mut bl = coord! {x: 0., y: 0.};
+
+        if self.vertex[0].x > self.vertex[1].x {
+            tl.x = self.vertex[1].x;
+            br.x = self.vertex[0].x;
+        } else {
+            tl.x = self.vertex[0].x;
+            br.x = self.vertex[1].x;
+        }
+
+        if self.vertex[0].y > self.vertex[1].y {
+            tl.y = self.vertex[1].y;
+            br.y = self.vertex[0].y;
+        } else {
+            tl.y = self.vertex[0].y;
+            br.y = self.vertex[1].y;
+        }
+
+        bl.x = tl.x;
+        bl.y = br.y;
+
+        tr.x = br.x;
+        tr.y = tl.y;
+
+        [tl, tr, br, bl]
+    }
 }
 
 // --
@@ -110,27 +141,19 @@ impl AppView {
 
     fn click_line_btn(&mut self) {
         let line = ElemLine {
-            // from_x: 0,
-            // from_y: 0,
-            // end_x: 0,
-            // end_y: 0,
             vertex: [coord! {x: 0., y: 0.}, coord! {x: 0., y: 0.}],
             drag_vertex: -1,
         };
         self.draw_elems.borrow_mut().push(DrawElem::Line(line));
         *self.status.borrow_mut() = Status::CREATING;
-        // self.frm.redraw();
     }
 
     fn click_rect_btn(&mut self) {
-        let mut rng = rand::thread_rng();
         self.draw_elems.borrow_mut().push(DrawElem::Rect(ElemRect {
-            x: rng.gen_range(0..=500),
-            y: rng.gen_range(0..=500),
-            w: rng.gen_range(0..=100),
-            h: rng.gen_range(0..=100),
+            vertex: [coord! {x: 0., y: 0.}, coord! {x: 0., y: 0.}],
+            drag_vertex: -1,
         }));
-        self.frm.redraw();
+        *self.status.borrow_mut() = Status::CREATING;
     }
 
     fn click_remove_btn(&mut self) {
@@ -177,8 +200,15 @@ impl AppView {
                             );
                         }
                         DrawElem::Rect(rect) => {
-                            draw::set_line_style(LineStyle::Solid, 1);
-                            draw::draw_rect_with_color(rect.x, rect.y, rect.w, rect.h, Color::Red);
+                            let [tl, tr, br, bl] = rect.to_angle_point();
+                            draw::set_line_style(LineStyle::Solid, 3);
+                            draw::draw_rect_with_color(
+                                tl.x as i32,
+                                tl.y as i32,
+                                (tr.x - tl.x) as i32,
+                                (bl.y - tl.y) as i32,
+                                Color::Red,
+                            );
                         }
                     }
                 }
@@ -188,7 +218,6 @@ impl AppView {
             let draw_elems = Rc::clone(&self.draw_elems);
             let hover_index = Rc::clone(&self.hover_index);
             // let bk_elem = Rc::clone(&self.bk_elem);
-            // let bk_elem1 = Rc::clone(&self.bk_elem);
             let status = Rc::clone(&self.status);
             let mut tx = 0;
             let mut ty = 0;
@@ -260,7 +289,12 @@ impl AppView {
                                             line.vertex[1].x = x as f64;
                                             line.vertex[1].y = y as f64;
                                         }
-                                        _ => {}
+                                        DrawElem::Rect(rect) => {
+                                            rect.vertex[0].x = tx as f64;
+                                            rect.vertex[0].y = ty as f64;
+                                            rect.vertex[1].x = x as f64;
+                                            rect.vertex[1].y = y as f64;
+                                        }
                                     }
                                 }
                             }
@@ -331,7 +365,7 @@ impl AppView {
                                         break;
                                     }
                                 }
-                                DrawElem::Rect(_) => todo!(),
+                                DrawElem::Rect(_) => (),
                             }
                         }
                         frm.redraw();
