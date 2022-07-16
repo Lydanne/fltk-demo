@@ -13,7 +13,7 @@ use fltk::{
 };
 use geo::{
     coord, line_string, point, polygon, Coordinate, EuclideanDistance, Intersects, Line,
-    LineString, Point,
+    LineString, Point, Rect,
 };
 
 use rand::Rng;
@@ -201,13 +201,52 @@ impl AppView {
                         }
                         DrawElem::Rect(rect) => {
                             let [tl, tr, br, bl] = rect.to_angle_point();
+
+                            if i as i32 == *hover_index.borrow() {
+                                draw::draw_box(
+                                    FrameType::OvalBox,
+                                    (tl.x - 5.) as i32,
+                                    (tl.y - 5.) as i32,
+                                    10,
+                                    10,
+                                    Color::DarkRed,
+                                );
+                                draw::draw_box(
+                                    FrameType::OvalBox,
+                                    (tr.x - 5.) as i32,
+                                    (tr.y - 5.) as i32,
+                                    10,
+                                    10,
+                                    Color::DarkRed,
+                                );
+                                draw::draw_box(
+                                    FrameType::OvalBox,
+                                    (br.x - 5.) as i32,
+                                    (br.y - 5.) as i32,
+                                    10,
+                                    10,
+                                    Color::DarkRed,
+                                );
+                                draw::draw_box(
+                                    FrameType::OvalBox,
+                                    (bl.x - 5.) as i32,
+                                    (bl.y - 5.) as i32,
+                                    10,
+                                    10,
+                                    Color::DarkRed,
+                                );
+
+                                draw::set_draw_color(Color::DarkRed);
+                            } else {
+                                draw::set_draw_color(Color::Red);
+                            }
+
                             draw::set_line_style(LineStyle::Solid, 3);
-                            draw::draw_rect_with_color(
+                            draw::draw_rect(
                                 tl.x as i32,
                                 tl.y as i32,
                                 (tr.x - tl.x) as i32,
                                 (bl.y - tl.y) as i32,
-                                Color::Red,
                             );
                         }
                     }
@@ -262,11 +301,26 @@ impl AppView {
                                                 *status = Status::EDIT_RESIZING;
                                                 line.drag_vertex = 1;
                                             } else {
-                                                // *bk_elem.borrow_mut() = Some(elem.clone());
                                                 telem = Some(elem.clone());
                                             }
                                         }
-                                        DrawElem::Rect(_) => todo!(),
+                                        DrawElem::Rect(rect) => {
+                                            // if point! {rect.vertex[0]}
+                                            //     .euclidean_distance(&coords_point)
+                                            //     < 10.
+                                            // {
+                                            //     *status = Status::EDIT_RESIZING;
+                                            //     rect.drag_vertex = 0;
+                                            // } else if point! {rect.vertex[1]}
+                                            //     .euclidean_distance(&coords_point)
+                                            //     < 10.
+                                            // {
+                                            //     *status = Status::EDIT_RESIZING;
+                                            //     rect.drag_vertex = 1;
+                                            // } else {
+                                            telem = Some(elem.clone());
+                                            // }
+                                        }
                                     }
                                 }
                             }
@@ -316,7 +370,18 @@ impl AppView {
                                                 line.vertex[1].y = tline.vertex[1].y + y_len;
                                             }
                                         }
-                                        _ => {}
+                                        DrawElem::Rect(rect) => {
+                                            let x_len = (x - tx) as f64;
+                                            let y_len = (y - ty) as f64;
+                                            // let telem = bk_elem1.borrow().unwrap();
+                                            let telem = telem.unwrap();
+                                            if let DrawElem::Rect(trect) = telem {
+                                                rect.vertex[0].x = trect.vertex[0].x + x_len;
+                                                rect.vertex[0].y = trect.vertex[0].y + y_len;
+                                                rect.vertex[1].x = trect.vertex[1].x + x_len;
+                                                rect.vertex[1].y = trect.vertex[1].y + y_len;
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -365,7 +430,14 @@ impl AppView {
                                         break;
                                     }
                                 }
-                                DrawElem::Rect(_) => (),
+                                DrawElem::Rect(rect) => {
+                                    let t_rect = Rect::new(rect.vertex[0], rect.vertex[1]);
+
+                                    if coords_point.intersects(&t_rect) {
+                                        *hover_index.borrow_mut() = (len - i - 1) as i32;
+                                        break;
+                                    }
+                                }
                             }
                         }
                         frm.redraw();
