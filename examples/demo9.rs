@@ -39,26 +39,20 @@ struct ElemRect {
 
 impl ElemRect {
     pub fn to_angle_point(&self) -> [Coordinate; 4] {
-        let mut tl = coord! {x: self.vertex[0].x as f64, y: self.vertex[0].y as f64};
+        let mut tl = coord! {x: self.vertex[0].x, y: self.vertex[0].y};
         let mut tr = coord! {x: 0., y: 0.};
-        let mut br = coord! {x: self.vertex[1].x as f64, y: self.vertex[1].y as f64};
+        let mut br = coord! {x: self.vertex[1].x, y: self.vertex[1].y};
         let mut bl = coord! {x: 0., y: 0.};
 
-        if self.vertex[0].x > self.vertex[1].x {
-            tl.x = self.vertex[1].x;
-            br.x = self.vertex[0].x;
-        } else {
-            tl.x = self.vertex[0].x;
-            br.x = self.vertex[1].x;
-        }
+        // if self.vertex[0].x > self.vertex[1].x {
+        //     tl.x = self.vertex[1].x;
+        //     br.x = self.vertex[0].x;
+        // }
 
-        if self.vertex[0].y > self.vertex[1].y {
-            tl.y = self.vertex[1].y;
-            br.y = self.vertex[0].y;
-        } else {
-            tl.y = self.vertex[0].y;
-            br.y = self.vertex[1].y;
-        }
+        // if self.vertex[0].y > self.vertex[1].y {
+        //     tl.y = self.vertex[1].y;
+        //     br.y = self.vertex[0].y;
+        // }
 
         bl.x = tl.x;
         bl.y = br.y;
@@ -355,6 +349,15 @@ impl AppView {
                                             rect.vertex[0].y = ty as f64;
                                             rect.vertex[1].x = x as f64;
                                             rect.vertex[1].y = y as f64;
+                                            if rect.vertex[0].x > rect.vertex[1].x {
+                                                rect.vertex[1].x = tx as f64;
+                                                rect.vertex[0].x = x as f64;
+                                            }
+
+                                            if rect.vertex[0].y > rect.vertex[1].y {
+                                                rect.vertex[1].y = ty as f64;
+                                                rect.vertex[0].y = y as f64;
+                                            }
                                         }
                                     }
                                 }
