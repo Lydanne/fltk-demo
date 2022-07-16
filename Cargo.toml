@@ -1,0 +1,23 @@
+[package]
+name = "fltk-demo"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+fltk = { git = "https://github.com/fltk-rs/fltk-rs" }
+objc = "0.2.7"
+sysbar = "0.3.0"
+tray-item = "0.7.0"
+scrap = "0.5"
+screenshots = "0.3.3"
+core-graphics = "0.22.3"
+image = "0.24.2"
+dcv-color-primitives = "0.5.1"
+rgb = { version = "0.8", features = ["argb"] }
+imageproc = "0.23.0"
+flemish = "0.3"
+rand = "0.8.5"
+geo = {version = "0.22.1" }
+geo-booleanop = "0.3.2"

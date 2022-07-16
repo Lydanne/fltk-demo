@@ -1,0 +1,82 @@
+{
+  // 使用 IntelliSense 了解相关属性。 
+  // 悬停以查看现有属性的描述。
+  // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug executable 'fltk-demo'",
+      "cargo": {
+        "args": [
+          "build",
+          "--bin=fltk-demo",
+          "--package=fltk-demo"
+        ],
+        "filter": {
+          "name": "fltk-demo",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in executable 'fltk-demo'",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--bin=fltk-demo",
+          "--package=fltk-demo"
+        ],
+        "filter": {
+          "name": "fltk-demo",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug example 'demo1'",
+      "cargo": {
+        "args": [
+          "build",
+          "--example=demo1",
+          "--package=fltk-demo"
+        ],
+        "filter": {
+          "name": "demo1",
+          "kind": "example"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in example 'demo1'",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--example=demo1",
+          "--package=fltk-demo"
+        ],
+        "filter": {
+          "name": "demo1",
+          "kind": "example"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}
