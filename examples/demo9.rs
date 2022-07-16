@@ -305,21 +305,28 @@ impl AppView {
                                             }
                                         }
                                         DrawElem::Rect(rect) => {
-                                            // if point! {rect.vertex[0]}
-                                            //     .euclidean_distance(&coords_point)
-                                            //     < 10.
-                                            // {
-                                            //     *status = Status::EDIT_RESIZING;
-                                            //     rect.drag_vertex = 0;
-                                            // } else if point! {rect.vertex[1]}
-                                            //     .euclidean_distance(&coords_point)
-                                            //     < 10.
-                                            // {
-                                            //     *status = Status::EDIT_RESIZING;
-                                            //     rect.drag_vertex = 1;
-                                            // } else {
-                                            telem = Some(elem.clone());
-                                            // }
+                                            let [tl, tr, br, bl] = rect.to_angle_point();
+                                            if point! {tl}.euclidean_distance(&coords_point) < 10. {
+                                                *status = Status::EDIT_RESIZING;
+                                                rect.drag_vertex = 0;
+                                            } else if point! {tr}.euclidean_distance(&coords_point)
+                                                < 10.
+                                            {
+                                                *status = Status::EDIT_RESIZING;
+                                                rect.drag_vertex = 1;
+                                            } else if point! {br}.euclidean_distance(&coords_point)
+                                                < 10.
+                                            {
+                                                *status = Status::EDIT_RESIZING;
+                                                rect.drag_vertex = 2;
+                                            } else if point! {bl}.euclidean_distance(&coords_point)
+                                                < 10.
+                                            {
+                                                *status = Status::EDIT_RESIZING;
+                                                rect.drag_vertex = 3;
+                                            } else {
+                                                telem = Some(elem.clone());
+                                            }
                                         }
                                     }
                                 }
@@ -402,7 +409,25 @@ impl AppView {
                                             }
                                             _ => (),
                                         },
-                                        _ => {}
+                                        DrawElem::Rect(rect) => match rect.drag_vertex {
+                                            0 => {
+                                                rect.vertex[0].x = x as f64;
+                                                rect.vertex[0].y = y as f64;
+                                            }
+                                            1 => {
+                                                rect.vertex[0].y = y as f64;
+                                                rect.vertex[1].x = x as f64;
+                                            }
+                                            2 => {
+                                                rect.vertex[1].x = x as f64;
+                                                rect.vertex[1].y = y as f64;
+                                            }
+                                            3 => {
+                                                rect.vertex[0].x = x as f64;
+                                                rect.vertex[1].y = y as f64;
+                                            }
+                                            _ => (),
+                                        },
                                     }
                                 }
                             }
