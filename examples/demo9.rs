@@ -28,7 +28,7 @@ enum DrawElem {
 #[derive(Debug, Copy, Clone)]
 struct ElemLine {
     vertex: [Coordinate; 2],
-    drag_point: i32,
+    drag_vertex: i32,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -115,7 +115,7 @@ impl AppView {
             // end_x: 0,
             // end_y: 0,
             vertex: [coord! {x: 0., y: 0.}, coord! {x: 0., y: 0.}],
-            drag_point: -1,
+            drag_vertex: -1,
         };
         self.draw_elems.borrow_mut().push(DrawElem::Line(line));
         *self.status.borrow_mut() = Status::CREATING;
@@ -225,13 +225,13 @@ impl AppView {
                                                 < 10.
                                             {
                                                 *status = Status::EDIT_RESIZING;
-                                                line.drag_point = 0;
+                                                line.drag_vertex = 0;
                                             } else if point! {line.vertex[1]}
                                                 .euclidean_distance(&coords_point)
                                                 < 10.
                                             {
                                                 *status = Status::EDIT_RESIZING;
-                                                line.drag_point = 1;
+                                                line.drag_vertex = 1;
                                             } else {
                                                 // *bk_elem.borrow_mut() = Some(elem.clone());
                                                 telem = Some(elem.clone());
@@ -292,7 +292,7 @@ impl AppView {
                                 let elem = elems.get_mut(idx as usize);
                                 if let Some(elem) = elem {
                                     match elem {
-                                        DrawElem::Line(line) => match line.drag_point {
+                                        DrawElem::Line(line) => match line.drag_vertex {
                                             0 => {
                                                 line.vertex[0].x = x as f64;
                                                 line.vertex[0].y = y as f64;
