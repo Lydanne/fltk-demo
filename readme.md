@@ -30,13 +30,9 @@ $ cargo run
 
 Other examples are meaningless.
 
-
-
 ## Thank
 
 Thanks for the help of [MoAlyousef (Mohammed Alyousef) (github.com)](https://github.com/MoAlyousef), the author of fltk-rs.
-
-
 
 ## Open source libraries used
 
@@ -44,4 +40,5 @@ Thanks for the help of [MoAlyousef (Mohammed Alyousef) (github.com)](https://git
 - A geometric computing library -> [georust/geo: Geospatial primitives and algorithms for Rust (github.com) ](https://github.com/georust/geo)
 - A picture processing library -> [image - crates.io: Rust Package Registry](https://crates.io/crates/image)
 - A library of system trays -> [olback/tray-item-rs: Multi-platform Tray Indicator (github.com)](https://github.com/olback/tray-item-rs)
+- A screenshot Lib ->[nashaofu/screenshots-rs: A cross-platform screenshots library for MacOS、Windows、Linux(X11、wayland). (github.com)](https://github.com/nashaofu/screenshots-rs)
 - other...
