@@ -245,12 +245,12 @@ impl AppView {
                                 (tr.x - tl.x) as i32,
                                 (bl.y - tl.y) as i32,
                             );
-                            draw::draw_line(
-                                rect.vertex[0].x as i32,
-                                rect.vertex[0].y as i32,
-                                rect.vertex[1].x as i32,
-                                rect.vertex[1].y as i32,
-                            )
+                            // draw::draw_line(
+                            //     rect.vertex[0].x as i32,
+                            //     rect.vertex[0].y as i32,
+                            //     rect.vertex[1].x as i32,
+                            //     rect.vertex[1].y as i32,
+                            // )
                         }
                     }
                 }
