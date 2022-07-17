@@ -44,15 +44,15 @@ impl ElemRect {
         let mut br = coord! {x: self.vertex[1].x, y: self.vertex[1].y};
         let mut bl = coord! {x: 0., y: 0.};
 
-        // if self.vertex[0].x > self.vertex[1].x {
-        //     tl.x = self.vertex[1].x;
-        //     br.x = self.vertex[0].x;
-        // }
+        if self.vertex[0].x > self.vertex[1].x {
+            tl.x = self.vertex[1].x;
+            br.x = self.vertex[0].x;
+        }
 
-        // if self.vertex[0].y > self.vertex[1].y {
-        //     tl.y = self.vertex[1].y;
-        //     br.y = self.vertex[0].y;
-        // }
+        if self.vertex[0].y > self.vertex[1].y {
+            tl.y = self.vertex[1].y;
+            br.y = self.vertex[0].y;
+        }
 
         bl.x = tl.x;
         bl.y = br.y;
