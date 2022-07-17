@@ -38,21 +38,24 @@ struct ElemRect {
 }
 
 impl ElemRect {
-    pub fn to_angle_point(&self) -> [Coordinate; 4] {
+    pub fn to_angle_point(&mut self) -> [Coordinate; 4] {
+        let mut t = 0.;
+        if self.vertex[0].x > self.vertex[1].x {
+            t = self.vertex[0].x;
+            self.vertex[0].x = self.vertex[1].x;
+            self.vertex[1].x = t;
+        }
+
+        if self.vertex[0].y > self.vertex[1].y {
+            t = self.vertex[0].y;
+            self.vertex[0].y = self.vertex[1].y;
+            self.vertex[1].y = t;
+        }
+
         let mut tl = coord! {x: self.vertex[0].x, y: self.vertex[0].y};
         let mut tr = coord! {x: 0., y: 0.};
         let mut br = coord! {x: self.vertex[1].x, y: self.vertex[1].y};
         let mut bl = coord! {x: 0., y: 0.};
-
-        if self.vertex[0].x > self.vertex[1].x {
-            tl.x = self.vertex[1].x;
-            br.x = self.vertex[0].x;
-        }
-
-        if self.vertex[0].y > self.vertex[1].y {
-            tl.y = self.vertex[1].y;
-            br.y = self.vertex[0].y;
-        }
 
         bl.x = tl.x;
         bl.y = br.y;
@@ -159,7 +162,7 @@ impl AppView {
             let draw_elems = Rc::clone(&self.draw_elems);
             let hover_index = Rc::clone(&self.hover_index);
             move |frm| {
-                for (i, elem) in draw_elems.borrow().iter().enumerate() {
+                for (i, elem) in draw_elems.borrow_mut().iter_mut().enumerate() {
                     match elem {
                         DrawElem::Line(line) => {
                             draw::set_line_style(LineStyle::Solid, 3);
@@ -242,6 +245,12 @@ impl AppView {
                                 (tr.x - tl.x) as i32,
                                 (bl.y - tl.y) as i32,
                             );
+                            draw::draw_line(
+                                rect.vertex[0].x as i32,
+                                rect.vertex[0].y as i32,
+                                rect.vertex[1].x as i32,
+                                rect.vertex[1].y as i32,
+                            )
                         }
                     }
                 }
