@@ -29,7 +29,9 @@ trait Elem {
 
 #[derive(Debug, Copy, Clone)]
 struct ElemLine {
-    coords: [Coordinate; 2],
+    from_coord: Coordinate,
+    end_coord: Coordinate,
+    // coords: [Coordinate; 2],
 }
 
 impl Elem for ElemLine {
@@ -39,16 +41,16 @@ impl Elem for ElemLine {
         if hover {
             draw::draw_box(
                 FrameType::OvalBox,
-                (line.coords[0].x - 5.) as i32,
-                (line.coords[0].y - 5.) as i32,
+                (line.from_coord.x - 5.) as i32,
+                (line.from_coord.y - 5.) as i32,
                 10,
                 10,
                 Color::DarkRed,
             );
             draw::draw_box(
                 FrameType::OvalBox,
-                (line.coords[1].x - 5.) as i32,
-                (line.coords[1].y - 5.) as i32,
+                (line.end_coord.x - 5.) as i32,
+                (line.end_coord.y - 5.) as i32,
                 10,
                 10,
                 Color::DarkRed,
@@ -59,44 +61,44 @@ impl Elem for ElemLine {
         }
 
         draw::draw_line(
-            line.coords[0].x as i32,
-            line.coords[0].y as i32,
-            line.coords[1].x as i32,
-            line.coords[1].y as i32,
+            line.from_coord.x as i32,
+            line.from_coord.y as i32,
+            line.end_coord.x as i32,
+            line.end_coord.y as i32,
         );
     }
 
     fn get_vertex(&self) -> Vec<Coordinate> {
-        Vec::from(self.coords)
+        vec![self.from_coord, self.end_coord]
     }
 
     fn hover_condition(&self, mouse_point: Point) -> bool {
-        let t_line = Line::new(self.coords[0], self.coords[1]);
+        let t_line = Line::new(self.from_coord, self.end_coord);
         mouse_point.euclidean_distance(&t_line) < 10.
     }
 
     fn creating(&mut self, from_coord: Coordinate, end_coord: Coordinate) {
-        self.coords[0] = from_coord;
-        self.coords[1] = end_coord;
+        self.from_coord = from_coord;
+        self.end_coord = end_coord;
     }
 
     fn edit_moving(&mut self, from_coord: Coordinate, end_coord: Coordinate) {
         let x_dif = end_coord.x - from_coord.x;
         let y_dif = end_coord.y - from_coord.y;
 
-        self.coords[0].x = self.coords[0].x + x_dif;
-        self.coords[0].y = self.coords[0].y + y_dif;
-        self.coords[1].x = self.coords[1].x + x_dif;
-        self.coords[1].y = self.coords[1].y + y_dif;
+        self.from_coord.x = self.from_coord.x + x_dif;
+        self.from_coord.y = self.from_coord.y + y_dif;
+        self.end_coord.x = self.end_coord.x + x_dif;
+        self.end_coord.y = self.end_coord.y + y_dif;
     }
 
     fn edit_resizing(&mut self, from_coord: Coordinate, end_coord: Coordinate, drag_vertex: i32) {
         match drag_vertex {
             0 => {
-                self.coords[0] = end_coord;
+                self.from_coord = end_coord;
             }
             1 => {
-                self.coords[1] = end_coord;
+                self.end_coord = end_coord;
             }
             _ => (),
         }
@@ -315,7 +317,9 @@ impl AppView {
 
     fn click_line_btn(&mut self) {
         let line = ElemLine {
-            coords: [coord! {x: 0., y: 0.}, coord! {x: 0., y: 0.}],
+            // coords: [coord! {x: 0., y: 0.}, coord! {x: 0., y: 0.}],
+            from_coord: coord! {x: 0., y: 0.},
+            end_coord: coord! {x: 0., y: 0.},
         };
         self.draw_elems.borrow_mut().push(Box::new(line));
         *self.status.borrow_mut() = Status::CREATING;
