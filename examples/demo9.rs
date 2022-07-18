@@ -167,32 +167,31 @@ impl Elem for ElemRect {
             (tr.x - tl.x) as i32,
             (bl.y - tl.y) as i32,
         );
-        // draw::draw_line(
-        //     rect.vertex[0].x as i32,
-        //     rect.vertex[0].y as i32,
-        //     rect.vertex[1].x as i32,
-        //     rect.vertex[1].y as i32,
-        // )
+        draw::draw_line(
+            rect.coords[0].x as i32,
+            rect.coords[0].y as i32,
+            rect.coords[1].x as i32,
+            rect.coords[1].y as i32,
+        )
     }
 
     fn get_vertex(&self) -> Vec<Coordinate> {
-        // let mut t = 0.;
-        // if self.vertex[0].x > self.vertex[1].x {
-        //     t = self.vertex[0].x;
-        //     self.vertex[0].x = self.vertex[1].x;
-        //     self.vertex[1].x = t;
-        // }
-
-        // if self.vertex[0].y > self.vertex[1].y {
-        //     t = self.vertex[0].y;
-        //     self.vertex[0].y = self.vertex[1].y;
-        //     self.vertex[1].y = t;
-        // }
-
         let mut tl = coord! {x: self.coords[0].x, y: self.coords[0].y};
         let mut tr = coord! {x: 0., y: 0.};
         let mut br = coord! {x: self.coords[1].x, y: self.coords[1].y};
         let mut bl = coord! {x: 0., y: 0.};
+
+        let mut t = 0.;
+        if tl.x > br.x {
+            t = tl.x;
+            tl.x = br.x;
+            br.x = t;
+        }
+        if tl.y > br.y {
+            t = tl.y;
+            tl.y = br.y;
+            br.y = t;
+        }
 
         bl.x = tl.x;
         bl.y = br.y;
