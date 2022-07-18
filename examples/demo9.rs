@@ -247,14 +247,12 @@ impl Elem for ElemRect {
     }
 
     fn hover_condition(&self, mouse_point: Point) -> bool {
-        Rect::new(
-            self.tl_coord,
-            coord! {
-                x: self.tl_coord.x + self.width,
-                y: self.tl_coord.y + self.height
-            },
-        )
-        .intersects(&mouse_point)
+        let vertex = self.get_vertex();
+        Rect::new(vertex[0], vertex[2]).intersects(&mouse_point)
+            || point! {vertex[0]}.euclidean_distance(&mouse_point) < 10.
+            || point! {vertex[1]}.euclidean_distance(&mouse_point) < 10.
+            || point! {vertex[2]}.euclidean_distance(&mouse_point) < 10.
+            || point! {vertex[3]}.euclidean_distance(&mouse_point) < 10.
     }
 }
 
