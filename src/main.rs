@@ -82,9 +82,6 @@ fn capture_screen_win() {
     img.scale(sw as i32, sh as i32, true, true);
     frm.set_image(Some(img));
 
-    // let offs = Offscreen::new(sw, sh).unwrap(); // TODO: An error will be reported here
-    // let offs = Rc::new(offs);
-
     menu.add("关闭", EventState::None, menu::MenuFlag::Normal, {
         let mut win = win.clone();
         // let mut offs = offs.clone();
