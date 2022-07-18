@@ -358,7 +358,6 @@ impl AppView {
             let status = Rc::clone(&self.status);
             let mut tx = 0;
             let mut ty = 0;
-            let mut telem: Option<Box<dyn Elem>> = None;
             move |frm, e| -> bool {
                 let (x, y) = app::event_coords();
                 let mouse_point = point! {
