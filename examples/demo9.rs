@@ -16,45 +16,182 @@ use geo::{
     LineString, Point, Rect,
 };
 
-use rand::Rng;
-
 // --
-#[derive(Debug, Copy, Clone)]
-enum DrawElem {
-    Line(ElemLine),
-    Rect(ElemRect),
+
+trait Elem {
+    fn draw(&self, hover: bool);
+    fn get_vertex(&self) -> Vec<Coordinate<f64>>;
+    fn set_drag_vertex(&mut self, drag_vertex: i32);
+    fn creating(&mut self, from_coord: Coordinate, end_coord: Coordinate);
+    fn edit_moving(&mut self, from_coord: Coordinate, end_coord: Coordinate);
+    fn edit_resizing(&mut self, from_coord: Coordinate, end_coord: Coordinate);
+    fn hover_condition(&self, mouse_point: Point) -> bool;
 }
 
 #[derive(Debug, Copy, Clone)]
 struct ElemLine {
-    vertex: [Coordinate; 2],
+    coords: [Coordinate; 2],
     drag_vertex: i32, // 0 from point, 1 end point
+}
+
+impl Elem for ElemLine {
+    fn draw(&self, hover: bool) {
+        let line = self;
+        draw::set_line_style(LineStyle::Solid, 3);
+        if hover {
+            draw::draw_box(
+                FrameType::OvalBox,
+                (line.coords[0].x - 5.) as i32,
+                (line.coords[0].y - 5.) as i32,
+                10,
+                10,
+                Color::DarkRed,
+            );
+            draw::draw_box(
+                FrameType::OvalBox,
+                (line.coords[1].x - 5.) as i32,
+                (line.coords[1].y - 5.) as i32,
+                10,
+                10,
+                Color::DarkRed,
+            );
+            draw::set_draw_color(Color::DarkRed);
+        } else {
+            draw::set_draw_color(Color::Red);
+        }
+
+        draw::draw_line(
+            line.coords[0].x as i32,
+            line.coords[0].y as i32,
+            line.coords[1].x as i32,
+            line.coords[1].y as i32,
+        );
+    }
+
+    fn get_vertex(&self) -> Vec<Coordinate> {
+        Vec::from(self.coords)
+    }
+
+    fn set_drag_vertex(&mut self, drag_vertex: i32) {
+        self.drag_vertex = drag_vertex;
+    }
+
+    fn hover_condition(&self, mouse_point: Point) -> bool {
+        let t_line = Line::new(self.coords[0], self.coords[1]);
+        mouse_point.euclidean_distance(&t_line) < 10.
+    }
+
+    fn creating(&mut self, from_coord: Coordinate, end_coord: Coordinate) {
+        self.coords[0] = from_coord;
+        self.coords[1] = end_coord;
+    }
+
+    fn edit_moving(&mut self, from_coord: Coordinate, end_coord: Coordinate) {
+        let x_dif = end_coord.x - from_coord.x;
+        let y_dif = end_coord.y - from_coord.y;
+
+        self.coords[0].x = self.coords[0].x + x_dif;
+        self.coords[0].y = self.coords[0].y + y_dif;
+        self.coords[1].x = self.coords[1].x + x_dif;
+        self.coords[1].y = self.coords[1].y + y_dif;
+    }
+
+    fn edit_resizing(&mut self, from_coord: Coordinate, end_coord: Coordinate) {
+        match self.drag_vertex {
+            0 => {
+                self.coords[0] = end_coord;
+            }
+            1 => {
+                self.coords[1] = end_coord;
+            }
+            _ => (),
+        }
+    }
 }
 
 #[derive(Debug, Copy, Clone)]
 struct ElemRect {
-    vertex: [Coordinate; 2], // diagonal
+    coords: [Coordinate; 2], // diagonal
     drag_vertex: i32,        // 0 from point, 1 end point
 }
 
-impl ElemRect {
-    pub fn to_angle_point(&mut self) -> [Coordinate; 4] {
-        let mut t = 0.;
-        if self.vertex[0].x > self.vertex[1].x {
-            t = self.vertex[0].x;
-            self.vertex[0].x = self.vertex[1].x;
-            self.vertex[1].x = t;
+impl Elem for ElemRect {
+    fn draw(&self, hover: bool) {
+        let rect = self;
+        let vec = rect.get_vertex();
+        let [tl, tr, br, bl] = [vec[0], vec[1], vec[2], vec[3]];
+
+        if hover {
+            draw::draw_box(
+                FrameType::OvalBox,
+                (tl.x - 5.) as i32,
+                (tl.y - 5.) as i32,
+                10,
+                10,
+                Color::DarkRed,
+            );
+            draw::draw_box(
+                FrameType::OvalBox,
+                (tr.x - 5.) as i32,
+                (tr.y - 5.) as i32,
+                10,
+                10,
+                Color::DarkRed,
+            );
+            draw::draw_box(
+                FrameType::OvalBox,
+                (br.x - 5.) as i32,
+                (br.y - 5.) as i32,
+                10,
+                10,
+                Color::DarkRed,
+            );
+            draw::draw_box(
+                FrameType::OvalBox,
+                (bl.x - 5.) as i32,
+                (bl.y - 5.) as i32,
+                10,
+                10,
+                Color::DarkRed,
+            );
+
+            draw::set_draw_color(Color::DarkRed);
+        } else {
+            draw::set_draw_color(Color::Red);
         }
 
-        if self.vertex[0].y > self.vertex[1].y {
-            t = self.vertex[0].y;
-            self.vertex[0].y = self.vertex[1].y;
-            self.vertex[1].y = t;
-        }
+        draw::set_line_style(LineStyle::Solid, 3);
+        draw::draw_rect(
+            tl.x as i32,
+            tl.y as i32,
+            (tr.x - tl.x) as i32,
+            (bl.y - tl.y) as i32,
+        );
+        // draw::draw_line(
+        //     rect.vertex[0].x as i32,
+        //     rect.vertex[0].y as i32,
+        //     rect.vertex[1].x as i32,
+        //     rect.vertex[1].y as i32,
+        // )
+    }
 
-        let mut tl = coord! {x: self.vertex[0].x, y: self.vertex[0].y};
+    fn get_vertex(&self) -> Vec<Coordinate> {
+        // let mut t = 0.;
+        // if self.vertex[0].x > self.vertex[1].x {
+        //     t = self.vertex[0].x;
+        //     self.vertex[0].x = self.vertex[1].x;
+        //     self.vertex[1].x = t;
+        // }
+
+        // if self.vertex[0].y > self.vertex[1].y {
+        //     t = self.vertex[0].y;
+        //     self.vertex[0].y = self.vertex[1].y;
+        //     self.vertex[1].y = t;
+        // }
+
+        let mut tl = coord! {x: self.coords[0].x, y: self.coords[0].y};
         let mut tr = coord! {x: 0., y: 0.};
-        let mut br = coord! {x: self.vertex[1].x, y: self.vertex[1].y};
+        let mut br = coord! {x: self.coords[1].x, y: self.coords[1].y};
         let mut bl = coord! {x: 0., y: 0.};
 
         bl.x = tl.x;
@@ -63,7 +200,55 @@ impl ElemRect {
         tr.x = br.x;
         tr.y = tl.y;
 
-        [tl, tr, br, bl]
+        Vec::from([tl, tr, br, bl])
+    }
+
+    fn set_drag_vertex(&mut self, drag_vertex: i32) {
+        self.drag_vertex = drag_vertex;
+    }
+
+    fn creating(&mut self, from_coord: Coordinate, end_coord: Coordinate) {
+        self.coords[0] = from_coord;
+        self.coords[1] = end_coord;
+        // if rect.vertex[0].x > rect.vertex[1].x {
+        //     rect.vertex[1].x = tx as f64;
+        //     rect.vertex[0].x = x as f64;
+        // }
+
+        // if rect.vertex[0].y > rect.vertex[1].y {
+        //     rect.vertex[1].y = ty as f64;
+        //     rect.vertex[0].y = y as f64;
+        // }
+    }
+
+    fn edit_moving(&mut self, from_coord: Coordinate, end_coord: Coordinate) {
+        let x_dif = end_coord.x - from_coord.x;
+        let y_dif = end_coord.y - from_coord.y;
+
+        self.coords[0].x = self.coords[0].x + x_dif;
+        self.coords[0].y = self.coords[0].y + y_dif;
+        self.coords[1].x = self.coords[1].x + x_dif;
+        self.coords[1].y = self.coords[1].y + y_dif;
+    }
+
+    fn hover_condition(&self, mouse_point: Point) -> bool {
+        Rect::new(self.coords[0], self.coords[1]).intersects(&mouse_point)
+    }
+
+    fn edit_resizing(&mut self, from_coord: Coordinate, end_coord: Coordinate) {
+        match self.drag_vertex {
+            0 => self.coords[0] = end_coord,
+            1 => {
+                self.coords[0].y = end_coord.y;
+                self.coords[1].x = end_coord.x;
+            }
+            2 => self.coords[1] = end_coord,
+            3 => {
+                self.coords[0].x = end_coord.x;
+                self.coords[1].y = end_coord.y;
+            }
+            _ => (),
+        }
     }
 }
 
@@ -88,7 +273,7 @@ struct AppView {
     app: app::App,
     win: window::Window,
     frm: frame::Frame,
-    draw_elems: Rc<RefCell<Vec<DrawElem>>>,
+    draw_elems: Rc<RefCell<Vec<Box<dyn Elem>>>>,
     hover_index: Rc<RefCell<i32>>,
     status: Rc<RefCell<Status>>,
     eventReceiver: app::Receiver<EventFn>,
@@ -138,16 +323,16 @@ impl AppView {
 
     fn click_line_btn(&mut self) {
         let line = ElemLine {
-            vertex: [coord! {x: 0., y: 0.}, coord! {x: 0., y: 0.}],
+            coords: [coord! {x: 0., y: 0.}, coord! {x: 0., y: 0.}],
             drag_vertex: -1,
         };
-        self.draw_elems.borrow_mut().push(DrawElem::Line(line));
+        self.draw_elems.borrow_mut().push(Box::new(line));
         *self.status.borrow_mut() = Status::CREATING;
     }
 
     fn click_rect_btn(&mut self) {
-        self.draw_elems.borrow_mut().push(DrawElem::Rect(ElemRect {
-            vertex: [coord! {x: 0., y: 0.}, coord! {x: 0., y: 0.}],
+        self.draw_elems.borrow_mut().push(Box::new(ElemRect {
+            coords: [coord! {x: 0., y: 0.}, coord! {x: 0., y: 0.}],
             drag_vertex: -1,
         }));
         *self.status.borrow_mut() = Status::CREATING;
@@ -163,110 +348,20 @@ impl AppView {
             let hover_index = Rc::clone(&self.hover_index);
             move |frm| {
                 for (i, elem) in draw_elems.borrow_mut().iter_mut().enumerate() {
-                    match elem {
-                        DrawElem::Line(line) => {
-                            draw::set_line_style(LineStyle::Solid, 3);
-
-                            if i as i32 == *hover_index.borrow() {
-                                draw::draw_box(
-                                    FrameType::OvalBox,
-                                    (line.vertex[0].x - 5.) as i32,
-                                    (line.vertex[0].y - 5.) as i32,
-                                    10,
-                                    10,
-                                    Color::DarkRed,
-                                );
-                                draw::draw_box(
-                                    FrameType::OvalBox,
-                                    (line.vertex[1].x - 5.) as i32,
-                                    (line.vertex[1].y - 5.) as i32,
-                                    10,
-                                    10,
-                                    Color::DarkRed,
-                                );
-                                draw::set_draw_color(Color::DarkRed);
-                            } else {
-                                draw::set_draw_color(Color::Red);
-                            }
-
-                            draw::draw_line(
-                                line.vertex[0].x as i32,
-                                line.vertex[0].y as i32,
-                                line.vertex[1].x as i32,
-                                line.vertex[1].y as i32,
-                            );
-                        }
-                        DrawElem::Rect(rect) => {
-                            let [tl, tr, br, bl] = rect.to_angle_point();
-
-                            if i as i32 == *hover_index.borrow() {
-                                draw::draw_box(
-                                    FrameType::OvalBox,
-                                    (tl.x - 5.) as i32,
-                                    (tl.y - 5.) as i32,
-                                    10,
-                                    10,
-                                    Color::DarkRed,
-                                );
-                                draw::draw_box(
-                                    FrameType::OvalBox,
-                                    (tr.x - 5.) as i32,
-                                    (tr.y - 5.) as i32,
-                                    10,
-                                    10,
-                                    Color::DarkRed,
-                                );
-                                draw::draw_box(
-                                    FrameType::OvalBox,
-                                    (br.x - 5.) as i32,
-                                    (br.y - 5.) as i32,
-                                    10,
-                                    10,
-                                    Color::DarkRed,
-                                );
-                                draw::draw_box(
-                                    FrameType::OvalBox,
-                                    (bl.x - 5.) as i32,
-                                    (bl.y - 5.) as i32,
-                                    10,
-                                    10,
-                                    Color::DarkRed,
-                                );
-
-                                draw::set_draw_color(Color::DarkRed);
-                            } else {
-                                draw::set_draw_color(Color::Red);
-                            }
-
-                            draw::set_line_style(LineStyle::Solid, 3);
-                            draw::draw_rect(
-                                tl.x as i32,
-                                tl.y as i32,
-                                (tr.x - tl.x) as i32,
-                                (bl.y - tl.y) as i32,
-                            );
-                            // draw::draw_line(
-                            //     rect.vertex[0].x as i32,
-                            //     rect.vertex[0].y as i32,
-                            //     rect.vertex[1].x as i32,
-                            //     rect.vertex[1].y as i32,
-                            // )
-                        }
-                    }
+                    elem.draw(i as i32 == *hover_index.borrow());
                 }
             }
         });
         self.frm.handle({
             let draw_elems = Rc::clone(&self.draw_elems);
             let hover_index = Rc::clone(&self.hover_index);
-            // let bk_elem = Rc::clone(&self.bk_elem);
             let status = Rc::clone(&self.status);
             let mut tx = 0;
             let mut ty = 0;
-            let mut telem: Option<DrawElem> = None;
+            let mut telem: Option<Box<dyn Elem>> = None;
             move |frm, e| -> bool {
                 let (x, y) = app::event_coords();
-                let coords_point = point! {
+                let mouse_point = point! {
                     x: x as f64,
                     y: y as f64
                 };
@@ -278,65 +373,32 @@ impl AppView {
                         let mut elems = draw_elems.borrow_mut();
 
                         let mut status = status.borrow_mut();
+                        let elem = elems.get_mut(idx as usize);
 
-                        match *status {
-                            Status::DELETING => {
-                                if idx > -1 {
-                                    elems.remove(idx as usize);
-                                    *status = Status::EDIT_MOVING;
+                        if let Some(elem) = elem {
+                            match *status {
+                                Status::DELETING => {
+                                    if idx > -1 {
+                                        elems.remove(idx as usize);
+                                        *status = Status::EDIT_MOVING;
+                                    }
                                 }
-                            }
-                            Status::EDIT_MOVING => {
-                                let elem = elems.get_mut(idx as usize);
-                                if let Some(elem) = elem {
-                                    match elem {
-                                        DrawElem::Line(line) => {
-                                            if point! {line.vertex[0]}
-                                                .euclidean_distance(&coords_point)
-                                                < 10.
-                                            {
-                                                *status = Status::EDIT_RESIZING;
-                                                line.drag_vertex = 0;
-                                            } else if point! {line.vertex[1]}
-                                                .euclidean_distance(&coords_point)
-                                                < 10.
-                                            {
-                                                *status = Status::EDIT_RESIZING;
-                                                line.drag_vertex = 1;
-                                            } else {
-                                                telem = Some(elem.clone());
-                                            }
-                                        }
-                                        DrawElem::Rect(rect) => {
-                                            let [tl, tr, br, bl] = rect.to_angle_point();
-                                            if point! {tl}.euclidean_distance(&coords_point) < 10. {
-                                                *status = Status::EDIT_RESIZING;
-                                                rect.drag_vertex = 0;
-                                            } else if point! {tr}.euclidean_distance(&coords_point)
-                                                < 10.
-                                            {
-                                                *status = Status::EDIT_RESIZING;
-                                                rect.drag_vertex = 1;
-                                            } else if point! {br}.euclidean_distance(&coords_point)
-                                                < 10.
-                                            {
-                                                *status = Status::EDIT_RESIZING;
-                                                rect.drag_vertex = 2;
-                                            } else if point! {bl}.euclidean_distance(&coords_point)
-                                                < 10.
-                                            {
-                                                *status = Status::EDIT_RESIZING;
-                                                rect.drag_vertex = 3;
-                                            } else {
-                                                telem = Some(elem.clone());
-                                            }
+                                Status::EDIT_MOVING => {
+                                    let vertex = elem.get_vertex();
+
+                                    for (i, coord) in vertex.iter().enumerate() {
+                                        let point = Point::new(coord.x, coord.y);
+                                        if mouse_point.euclidean_distance(&point) < 10. {
+                                            *status = Status::EDIT_RESIZING;
+                                            elem.set_drag_vertex(i as i32);
+                                            *status = Status::EDIT_RESIZING;
                                         }
                                     }
                                 }
-                            }
-                            Status::CREATING => (),
-                            Status::EDIT_RESIZING => (),
-                        };
+                                Status::CREATING => (),
+                                Status::EDIT_RESIZING => (),
+                            };
+                        }
 
                         true
                     }
@@ -346,29 +408,10 @@ impl AppView {
                                 let mut elems = draw_elems.borrow_mut();
                                 let top = elems.last_mut();
                                 if let Some(elem) = top {
-                                    match elem {
-                                        DrawElem::Line(line) => {
-                                            line.vertex[0].x = tx as f64;
-                                            line.vertex[0].y = ty as f64;
-                                            line.vertex[1].x = x as f64;
-                                            line.vertex[1].y = y as f64;
-                                        }
-                                        DrawElem::Rect(rect) => {
-                                            rect.vertex[0].x = tx as f64;
-                                            rect.vertex[0].y = ty as f64;
-                                            rect.vertex[1].x = x as f64;
-                                            rect.vertex[1].y = y as f64;
-                                            if rect.vertex[0].x > rect.vertex[1].x {
-                                                rect.vertex[1].x = tx as f64;
-                                                rect.vertex[0].x = x as f64;
-                                            }
-
-                                            if rect.vertex[0].y > rect.vertex[1].y {
-                                                rect.vertex[1].y = ty as f64;
-                                                rect.vertex[0].y = y as f64;
-                                            }
-                                        }
-                                    }
+                                    elem.creating(
+                                        coord! {x: tx as f64, y: ty as f64},
+                                        coord! {x: x  as f64, y: y as f64},
+                                    )
                                 }
                             }
                             Status::EDIT_MOVING => {
@@ -376,32 +419,12 @@ impl AppView {
                                 let mut elems = draw_elems.borrow_mut();
                                 let elem = elems.get_mut(idx as usize);
                                 if let Some(elem) = elem {
-                                    match elem {
-                                        DrawElem::Line(line) => {
-                                            let x_len = (x - tx) as f64;
-                                            let y_len = (y - ty) as f64;
-                                            // let telem = bk_elem1.borrow().unwrap();
-                                            let telem = telem.unwrap();
-                                            if let DrawElem::Line(tline) = telem {
-                                                line.vertex[0].x = tline.vertex[0].x + x_len;
-                                                line.vertex[0].y = tline.vertex[0].y + y_len;
-                                                line.vertex[1].x = tline.vertex[1].x + x_len;
-                                                line.vertex[1].y = tline.vertex[1].y + y_len;
-                                            }
-                                        }
-                                        DrawElem::Rect(rect) => {
-                                            let x_len = (x - tx) as f64;
-                                            let y_len = (y - ty) as f64;
-                                            // let telem = bk_elem1.borrow().unwrap();
-                                            let telem = telem.unwrap();
-                                            if let DrawElem::Rect(trect) = telem {
-                                                rect.vertex[0].x = trect.vertex[0].x + x_len;
-                                                rect.vertex[0].y = trect.vertex[0].y + y_len;
-                                                rect.vertex[1].x = trect.vertex[1].x + x_len;
-                                                rect.vertex[1].y = trect.vertex[1].y + y_len;
-                                            }
-                                        }
-                                    }
+                                    elem.edit_moving(
+                                        coord! {x: tx as f64, y: ty as f64},
+                                        coord! {x: x  as f64, y: y as f64},
+                                    );
+                                    tx = x;
+                                    ty = y;
                                 }
                             }
                             Status::EDIT_RESIZING => {
@@ -409,38 +432,10 @@ impl AppView {
                                 let mut elems = draw_elems.borrow_mut();
                                 let elem = elems.get_mut(idx as usize);
                                 if let Some(elem) = elem {
-                                    match elem {
-                                        DrawElem::Line(line) => match line.drag_vertex {
-                                            0 => {
-                                                line.vertex[0].x = x as f64;
-                                                line.vertex[0].y = y as f64;
-                                            }
-                                            1 => {
-                                                line.vertex[1].x = x as f64;
-                                                line.vertex[1].y = y as f64;
-                                            }
-                                            _ => (),
-                                        },
-                                        DrawElem::Rect(rect) => match rect.drag_vertex {
-                                            0 => {
-                                                rect.vertex[0].x = x as f64;
-                                                rect.vertex[0].y = y as f64;
-                                            }
-                                            1 => {
-                                                rect.vertex[0].y = y as f64;
-                                                rect.vertex[1].x = x as f64;
-                                            }
-                                            2 => {
-                                                rect.vertex[1].x = x as f64;
-                                                rect.vertex[1].y = y as f64;
-                                            }
-                                            3 => {
-                                                rect.vertex[0].x = x as f64;
-                                                rect.vertex[1].y = y as f64;
-                                            }
-                                            _ => (),
-                                        },
-                                    }
+                                    elem.edit_resizing(
+                                        coord! {x: tx as f64, y: ty as f64},
+                                        coord! {x: x  as f64, y: y as f64},
+                                    );
                                 }
                             }
                             Status::DELETING => (),
@@ -458,23 +453,9 @@ impl AppView {
                         *hover_index.borrow_mut() = -1;
                         let len = draw_elems.borrow_mut().len();
                         for (i, elem) in draw_elems.borrow_mut().iter().rev().enumerate() {
-                            match elem {
-                                DrawElem::Line(line) => {
-                                    let t_line = Line::new(line.vertex[0], line.vertex[1]);
-
-                                    if coords_point.euclidean_distance(&t_line) < 10. {
-                                        *hover_index.borrow_mut() = (len - i - 1) as i32;
-                                        break;
-                                    }
-                                }
-                                DrawElem::Rect(rect) => {
-                                    let t_rect = Rect::new(rect.vertex[0], rect.vertex[1]);
-
-                                    if coords_point.intersects(&t_rect) {
-                                        *hover_index.borrow_mut() = (len - i - 1) as i32;
-                                        break;
-                                    }
-                                }
+                            if elem.hover_condition(mouse_point) {
+                                *hover_index.borrow_mut() = (len - i - 1) as i32;
+                                break;
                             }
                         }
                         frm.redraw();
