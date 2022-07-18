@@ -231,10 +231,6 @@ impl Elem for ElemRect {
         self.coords[1].y = self.coords[1].y + y_dif;
     }
 
-    fn hover_condition(&self, mouse_point: Point) -> bool {
-        Rect::new(self.coords[0], self.coords[1]).intersects(&mouse_point)
-    }
-
     fn edit_resizing(&mut self, from_coord: Coordinate, end_coord: Coordinate) {
         match self.drag_vertex {
             0 => self.coords[0] = end_coord,
@@ -249,6 +245,10 @@ impl Elem for ElemRect {
             }
             _ => (),
         }
+    }
+
+    fn hover_condition(&self, mouse_point: Point) -> bool {
+        Rect::new(self.coords[0], self.coords[1]).intersects(&mouse_point)
     }
 }
 
