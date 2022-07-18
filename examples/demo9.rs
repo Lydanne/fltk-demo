@@ -21,17 +21,15 @@ use geo::{
 trait Elem {
     fn draw(&self, hover: bool);
     fn get_vertex(&self) -> Vec<Coordinate<f64>>;
-    fn set_drag_vertex(&mut self, drag_vertex: i32);
     fn creating(&mut self, from_coord: Coordinate, end_coord: Coordinate);
     fn edit_moving(&mut self, from_coord: Coordinate, end_coord: Coordinate);
-    fn edit_resizing(&mut self, from_coord: Coordinate, end_coord: Coordinate);
+    fn edit_resizing(&mut self, from_coord: Coordinate, end_coord: Coordinate, drag_vertex: i32);
     fn hover_condition(&self, mouse_point: Point) -> bool;
 }
 
 #[derive(Debug, Copy, Clone)]
 struct ElemLine {
     coords: [Coordinate; 2],
-    drag_vertex: i32, // 0 from point, 1 end point
 }
 
 impl Elem for ElemLine {
@@ -72,10 +70,6 @@ impl Elem for ElemLine {
         Vec::from(self.coords)
     }
 
-    fn set_drag_vertex(&mut self, drag_vertex: i32) {
-        self.drag_vertex = drag_vertex;
-    }
-
     fn hover_condition(&self, mouse_point: Point) -> bool {
         let t_line = Line::new(self.coords[0], self.coords[1]);
         mouse_point.euclidean_distance(&t_line) < 10.
@@ -96,8 +90,8 @@ impl Elem for ElemLine {
         self.coords[1].y = self.coords[1].y + y_dif;
     }
 
-    fn edit_resizing(&mut self, from_coord: Coordinate, end_coord: Coordinate) {
-        match self.drag_vertex {
+    fn edit_resizing(&mut self, from_coord: Coordinate, end_coord: Coordinate, drag_vertex: i32) {
+        match drag_vertex {
             0 => {
                 self.coords[0] = end_coord;
             }
@@ -111,8 +105,10 @@ impl Elem for ElemLine {
 
 #[derive(Debug, Copy, Clone)]
 struct ElemRect {
+    // tl_coord: Coordinate, // top left coord
+    // width: i32,
+    // height: i32,
     coords: [Coordinate; 2], // diagonal
-    drag_vertex: i32,        // 0 from point, 1 end point
 }
 
 impl Elem for ElemRect {
@@ -202,10 +198,6 @@ impl Elem for ElemRect {
         Vec::from([tl, tr, br, bl])
     }
 
-    fn set_drag_vertex(&mut self, drag_vertex: i32) {
-        self.drag_vertex = drag_vertex;
-    }
-
     fn creating(&mut self, from_coord: Coordinate, end_coord: Coordinate) {
         self.coords[0] = from_coord;
         self.coords[1] = end_coord;
@@ -230,8 +222,8 @@ impl Elem for ElemRect {
         self.coords[1].y = self.coords[1].y + y_dif;
     }
 
-    fn edit_resizing(&mut self, from_coord: Coordinate, end_coord: Coordinate) {
-        match self.drag_vertex {
+    fn edit_resizing(&mut self, from_coord: Coordinate, end_coord: Coordinate, drag_vertex: i32) {
+        match drag_vertex {
             0 => self.coords[0] = end_coord,
             1 => {
                 self.coords[0].y = end_coord.y;
@@ -274,6 +266,7 @@ struct AppView {
     frm: frame::Frame,
     draw_elems: Rc<RefCell<Vec<Box<dyn Elem>>>>,
     hover_index: Rc<RefCell<i32>>,
+    drag_vertex: Rc<RefCell<i32>>,
     status: Rc<RefCell<Status>>,
     eventReceiver: app::Receiver<EventFn>,
 }
@@ -313,9 +306,9 @@ impl AppView {
             win: main_win,
             frm,
             draw_elems: Rc::new(RefCell::new(Vec::new())),
-            // bk_elem: Rc::new(RefCell::new(None)),
             eventReceiver: receiver,
             hover_index: Rc::new(RefCell::new(0)),
+            drag_vertex: Rc::new(RefCell::new(0)),
             status: Rc::new(RefCell::new(Status::EDIT_MOVING)),
         }
     }
@@ -323,7 +316,6 @@ impl AppView {
     fn click_line_btn(&mut self) {
         let line = ElemLine {
             coords: [coord! {x: 0., y: 0.}, coord! {x: 0., y: 0.}],
-            drag_vertex: -1,
         };
         self.draw_elems.borrow_mut().push(Box::new(line));
         *self.status.borrow_mut() = Status::CREATING;
@@ -332,7 +324,6 @@ impl AppView {
     fn click_rect_btn(&mut self) {
         self.draw_elems.borrow_mut().push(Box::new(ElemRect {
             coords: [coord! {x: 0., y: 0.}, coord! {x: 0., y: 0.}],
-            drag_vertex: -1,
         }));
         *self.status.borrow_mut() = Status::CREATING;
     }
@@ -354,6 +345,7 @@ impl AppView {
         self.frm.handle({
             let draw_elems = Rc::clone(&self.draw_elems);
             let hover_index = Rc::clone(&self.hover_index);
+            let drag_vertex = Rc::clone(&self.drag_vertex);
             let status = Rc::clone(&self.status);
             let mut tx = 0;
             let mut ty = 0;
@@ -388,7 +380,7 @@ impl AppView {
                                         let point = Point::new(coord.x, coord.y);
                                         if mouse_point.euclidean_distance(&point) < 10. {
                                             *status = Status::EDIT_RESIZING;
-                                            elem.set_drag_vertex(i as i32);
+                                            *drag_vertex.borrow_mut() = i as i32;
                                             *status = Status::EDIT_RESIZING;
                                         }
                                     }
@@ -433,6 +425,7 @@ impl AppView {
                                     elem.edit_resizing(
                                         coord! {x: tx as f64, y: ty as f64},
                                         coord! {x: x  as f64, y: y as f64},
+                                        *drag_vertex.borrow(),
                                     );
                                 }
                             }
