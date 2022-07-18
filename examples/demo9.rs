@@ -31,7 +31,6 @@ trait Elem {
 struct ElemLine {
     from_coord: Coordinate,
     end_coord: Coordinate,
-    // coords: [Coordinate; 2],
 }
 
 impl Elem for ElemLine {
@@ -107,10 +106,9 @@ impl Elem for ElemLine {
 
 #[derive(Debug, Copy, Clone)]
 struct ElemRect {
-    // tl_coord: Coordinate, // top left coord
-    // width: i32,
-    // height: i32,
-    coords: [Coordinate; 2], // diagonal
+    tl_coord: Coordinate, // top left coord
+    width: f64,
+    height: f64,
 }
 
 impl Elem for ElemRect {
@@ -162,21 +160,15 @@ impl Elem for ElemRect {
         draw::draw_rect(
             tl.x as i32,
             tl.y as i32,
-            (tr.x - tl.x) as i32,
-            (bl.y - tl.y) as i32,
+            self.width as i32,
+            self.height as i32,
         );
-        draw::draw_line(
-            rect.coords[0].x as i32,
-            rect.coords[0].y as i32,
-            rect.coords[1].x as i32,
-            rect.coords[1].y as i32,
-        )
     }
 
     fn get_vertex(&self) -> Vec<Coordinate> {
-        let mut tl = coord! {x: self.coords[0].x, y: self.coords[0].y};
+        let mut tl = coord! {x: self.tl_coord.x, y: self.tl_coord.y};
         let mut tr = coord! {x: 0., y: 0.};
-        let mut br = coord! {x: self.coords[1].x, y: self.coords[1].y};
+        let mut br = coord! {x: self.tl_coord.x + self.width, y: self.tl_coord.y + self.height};
         let mut bl = coord! {x: 0., y: 0.};
 
         let mut t = 0.;
@@ -201,47 +193,68 @@ impl Elem for ElemRect {
     }
 
     fn creating(&mut self, from_coord: Coordinate, end_coord: Coordinate) {
-        self.coords[0] = from_coord;
-        self.coords[1] = end_coord;
-        // if rect.vertex[0].x > rect.vertex[1].x {
-        //     rect.vertex[1].x = tx as f64;
-        //     rect.vertex[0].x = x as f64;
-        // }
+        let mut tfrom = from_coord.clone();
+        let mut tend = end_coord.clone();
 
-        // if rect.vertex[0].y > rect.vertex[1].y {
-        //     rect.vertex[1].y = ty as f64;
-        //     rect.vertex[0].y = y as f64;
-        // }
+        if tfrom.x > tend.x {
+            let t = tfrom.x;
+            tfrom.x = tend.x;
+            tend.x = t;
+        }
+
+        if tfrom.y > tend.y {
+            let t = tfrom.y;
+            tfrom.y = tend.y;
+            tend.y = t;
+        }
+
+        self.tl_coord = tfrom;
+        self.width = tend.x - tfrom.x;
+        self.height = tend.y - tfrom.y;
     }
 
     fn edit_moving(&mut self, from_coord: Coordinate, end_coord: Coordinate) {
         let x_dif = end_coord.x - from_coord.x;
         let y_dif = end_coord.y - from_coord.y;
 
-        self.coords[0].x = self.coords[0].x + x_dif;
-        self.coords[0].y = self.coords[0].y + y_dif;
-        self.coords[1].x = self.coords[1].x + x_dif;
-        self.coords[1].y = self.coords[1].y + y_dif;
+        self.tl_coord.x += x_dif;
+        self.tl_coord.y += y_dif;
     }
 
     fn edit_resizing(&mut self, from_coord: Coordinate, end_coord: Coordinate, drag_vertex: i32) {
         match drag_vertex {
-            0 => self.coords[0] = end_coord,
-            1 => {
-                self.coords[0].y = end_coord.y;
-                self.coords[1].x = end_coord.x;
+            0 => {
+                self.width += self.tl_coord.x - end_coord.x;
+                self.height += self.tl_coord.y - end_coord.y;
+                self.tl_coord = end_coord;
             }
-            2 => self.coords[1] = end_coord,
+            1 => {
+                self.width = end_coord.x - self.tl_coord.x;
+                self.height += self.tl_coord.y - end_coord.y;
+                self.tl_coord.y = end_coord.y;
+            }
+            2 => {
+                self.width = end_coord.x - self.tl_coord.x;
+                self.height = end_coord.y - self.tl_coord.y;
+            }
             3 => {
-                self.coords[0].x = end_coord.x;
-                self.coords[1].y = end_coord.y;
+                self.height = end_coord.y - self.tl_coord.y;
+                self.width += self.tl_coord.x - end_coord.x;
+                self.tl_coord.x = end_coord.x;
             }
             _ => (),
         }
     }
 
     fn hover_condition(&self, mouse_point: Point) -> bool {
-        Rect::new(self.coords[0], self.coords[1]).intersects(&mouse_point)
+        Rect::new(
+            self.tl_coord,
+            coord! {
+                x: self.tl_coord.x + self.width,
+                y: self.tl_coord.y + self.height
+            },
+        )
+        .intersects(&mouse_point)
     }
 }
 
@@ -317,7 +330,6 @@ impl AppView {
 
     fn click_line_btn(&mut self) {
         let line = ElemLine {
-            // coords: [coord! {x: 0., y: 0.}, coord! {x: 0., y: 0.}],
             from_coord: coord! {x: 0., y: 0.},
             end_coord: coord! {x: 0., y: 0.},
         };
@@ -327,7 +339,9 @@ impl AppView {
 
     fn click_rect_btn(&mut self) {
         self.draw_elems.borrow_mut().push(Box::new(ElemRect {
-            coords: [coord! {x: 0., y: 0.}, coord! {x: 0., y: 0.}],
+            tl_coord: coord! {x: 0., y: 0.},
+            width: 0.,
+            height: 0.,
         }));
         *self.status.borrow_mut() = Status::CREATING;
     }
