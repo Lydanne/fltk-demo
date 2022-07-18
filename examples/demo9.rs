@@ -244,6 +244,14 @@ impl Elem for ElemRect {
             }
             _ => (),
         }
+        if self.width < 0. {
+            self.width = 0.;
+            self.tl_coord.x = end_coord.x;
+        }
+        if self.height < 0. {
+            self.height = 0.;
+            self.tl_coord.y = end_coord.y;
+        }
     }
 
     fn hover_condition(&self, mouse_point: Point) -> bool {
