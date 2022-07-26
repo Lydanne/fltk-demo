@@ -261,15 +261,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cocoa-colors"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a7fc3439406f349e0bc20d7de87314803378a535190d12e62991f7c8474d5296"
-dependencies = [
- "cc",
-]
-
-[[package]]
 name = "cocoa-foundation"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -282,15 +273,6 @@ dependencies = [
  "foreign-types",
  "libc",
  "objc",
-]
-
-[[package]]
-name = "color-maps"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "120b737cc99b0d73bf0a9bfa6086e84c0bde3b955851f37f812865bc08b35feb"
-dependencies = [
- "lazy_static",
 ]
 
 [[package]]
@@ -549,16 +531,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "flemish"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8aa7ce99f2b98ef16f4abe9a4ab359930856b4b66c6ff393cb1a1cd79b0f5d2f"
-dependencies = [
- "fltk 1.2.30",
- "fltk-theme",
-]
-
-[[package]]
 name = "float_next_after"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -569,25 +541,13 @@ dependencies = [
 
 [[package]]
 name = "fltk"
-version = "1.2.30"
+version = "1.3.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3c8e3415a18656b11a20e7e1bd6ae2efbc321bfa4fc4d8624a59942869e16e0b"
+checksum = "b23e9952a97c05f16980e9e4c8f1947a446e2f73f6dea9a1635284b4b865f184"
 dependencies = [
  "bitflags",
  "crossbeam-channel",
- "fltk-sys 1.2.30",
- "paste",
- "ttf-parser 0.14.0",
-]
-
-[[package]]
-name = "fltk"
-version = "1.3.11"
-source = "git+https://github.com/fltk-rs/fltk-rs#43cf27ea857b9bf20de1d5fd7372f400f3be66c6"
-dependencies = [
- "bitflags",
- "crossbeam-channel",
- "fltk-sys 1.3.11",
+ "fltk-sys",
  "lazy_static",
  "paste",
  "ttf-parser 0.15.2",
@@ -599,8 +559,7 @@ version = "0.1.0"
 dependencies = [
  "core-graphics",
  "dcv-color-primitives",
- "flemish",
- "fltk 1.3.11",
+ "fltk",
  "geo",
  "geo-booleanop",
  "image",
@@ -616,31 +575,11 @@ dependencies = [
 
 [[package]]
 name = "fltk-sys"
-version = "1.2.30"
+version = "1.3.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dc5f2bc77f2f08fb48bd8625fcb68ce446f36cfce204680416e30774606a4f86"
+checksum = "bc98ac94df90651d5ca5082b2990ce817422e046078d5c3906a046823c52802a"
 dependencies = [
  "cmake",
-]
-
-[[package]]
-name = "fltk-sys"
-version = "1.3.11"
-source = "git+https://github.com/fltk-rs/fltk-rs#43cf27ea857b9bf20de1d5fd7372f400f3be66c6"
-dependencies = [
- "cmake",
-]
-
-[[package]]
-name = "fltk-theme"
-version = "0.4.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "abee3d9b0ed8bd45d10e4cc279d757ce71c37224482e8377a99906f7be771266"
-dependencies = [
- "cocoa-colors",
- "color-maps",
- "fltk 1.2.30",
- "lazy_static",
 ]
 
 [[package]]
@@ -2083,12 +2022,6 @@ name = "ttf-parser"
 version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3e5d7cd7ab3e47dda6e56542f4bbf3824c15234958c6e1bd6aaa347e93499fdc"
-
-[[package]]
-name = "ttf-parser"
-version = "0.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4ccbe8381883510b6a2d8f1e32905bddd178c11caef8083086d0c0c9ab0ac281"
 
 [[package]]
 name = "ttf-parser"
