@@ -19,7 +19,7 @@ use geo::{
 // --
 
 trait Elem {
-    fn draw(&self, hover: bool);
+    fn draw(&self, hover: bool, scale: f64);
     fn get_vertex(&self) -> Vec<Coordinate<f64>>;
     fn creating(&mut self, from_coord: Coordinate, end_coord: Coordinate);
     fn edit_moving(&mut self, from_coord: Coordinate, end_coord: Coordinate);
@@ -34,8 +34,9 @@ struct ElemLine {
 }
 
 impl Elem for ElemLine {
-    fn draw(&self, hover: bool) {
+    fn draw(&self, hover: bool, scale: f64) {
         let line = self;
+        // draw::scale_xy(line.end_coord.x / 2., line.end_coord.y / 2.);
         draw::set_line_style(LineStyle::Solid, 3);
         if hover {
             draw::draw_box(
@@ -112,10 +113,15 @@ struct ElemRect {
 }
 
 impl Elem for ElemRect {
-    fn draw(&self, hover: bool) {
+    fn draw(&self, hover: bool, scale: f64) {
         let rect = self;
         let vec = rect.get_vertex();
         let [tl, tr, br, bl] = [vec[0], vec[1], vec[2], vec[3]];
+
+        draw::push_matrix();
+        draw::scale_xy(self.tl_coord.x, self.tl_coord.y);
+        draw::scale(scale);
+        draw::translate(self.width * scale, self.width * scale);
 
         if hover {
             draw::draw_box(
@@ -163,6 +169,8 @@ impl Elem for ElemRect {
             self.width as i32,
             self.height as i32,
         );
+
+        draw::pop_matrix();
     }
 
     fn get_vertex(&self) -> Vec<Coordinate> {
@@ -271,6 +279,7 @@ enum EventFn {
     ClickLineBtn,
     ClickRectBtn,
     ClickRemoveBtn,
+    ClickScaleBtn,
 }
 
 #[derive(Clone)]
@@ -290,6 +299,7 @@ struct AppView {
     drag_vertex: Rc<RefCell<i32>>,
     status: Rc<RefCell<Status>>,
     eventReceiver: app::Receiver<EventFn>,
+    scale: Rc<RefCell<f64>>,
 }
 
 impl AppView {
@@ -313,6 +323,8 @@ impl AppView {
         rect_btn.emit(s, EventFn::ClickRectBtn);
         let mut remove_btn = button::Button::default().with_label("Remove");
         remove_btn.emit(s, EventFn::ClickRemoveBtn);
+        let mut scale_btn = button::Button::default().with_label("Scale");
+        scale_btn.emit(s, EventFn::ClickScaleBtn);
         btm_col.end();
 
         root_col.set_size(&top_col, 500);
@@ -330,6 +342,7 @@ impl AppView {
             eventReceiver: receiver,
             hover_index: Rc::new(RefCell::new(0)),
             drag_vertex: Rc::new(RefCell::new(0)),
+            scale: Rc::new(RefCell::new(1.)),
             status: Rc::new(RefCell::new(Status::EDIT_MOVING)),
         }
     }
@@ -355,14 +368,18 @@ impl AppView {
     fn click_remove_btn(&mut self) {
         *self.status.borrow_mut() = Status::DELETING;
     }
-
+    fn click_scale_btn(&mut self) {
+        (*self.scale.borrow_mut()) += 0.1;
+        self.frm.redraw();
+    }
     pub fn run(&mut self) {
         self.frm.draw({
             let draw_elems = Rc::clone(&self.draw_elems);
             let hover_index = Rc::clone(&self.hover_index);
+            let scale = Rc::clone(&self.scale);
             move |frm| {
                 for (i, elem) in draw_elems.borrow_mut().iter_mut().enumerate() {
-                    elem.draw(i as i32 == *hover_index.borrow());
+                    elem.draw(i as i32 == *hover_index.borrow(), *scale.borrow());
                 }
             }
         });
@@ -487,6 +504,7 @@ impl AppView {
                     EventFn::ClickLineBtn => self.click_line_btn(),
                     EventFn::ClickRectBtn => self.click_rect_btn(),
                     EventFn::ClickRemoveBtn => self.click_remove_btn(),
+                    EventFn::ClickScaleBtn => self.click_scale_btn(),
                 }
             }
         }

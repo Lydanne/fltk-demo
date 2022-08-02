@@ -1,21 +1,31 @@
-enum Method {
-    Cb(Box<dyn Fn(i32) -> i32>),
-}
-
-fn get_closure() -> Method {
-    let my_closure = |i: i32| i * i;
-    Method::Cb(Box::new(my_closure))
-}
-
-fn callback<F: FnMut() + 'static>(cb: F) -> F {
-    return cb;
-}
+use fltk::{prelude::*, *};
 
 fn main() {
-    let my_closure = get_closure();
-    let mut call = callback(|| println!("hello"));
-    call();
-    if let Method::Cb(cb) = my_closure {
-        println!("{:?}", cb(22));
-    }
+    let a = app::App::default();
+
+    let mut win = window::Window::default().with_size(400, 300);
+    let flex = group::Flex::default()
+        .with_size(100, 100)
+        .column()
+        .center_of_parent();
+    let mut show = button::Button::default().with_label("Show");
+    let label = frame::Frame::default().with_label("Enter age");
+    let input = input::IntInput::default();
+    let mut btn = button::Button::default().with_label("Submit");
+    flex.end();
+    win.end();
+    win.show();
+
+    show.set_callback({
+        let mut input = input.clone();
+        move |btn| {
+            input.take_focus();
+        }
+    });
+
+    btn.set_callback(move |btn| {
+        println!("your age is {}", input.value());
+    });
+
+    a.run().unwrap();
 }
